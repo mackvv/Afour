@@ -1,31 +1,68 @@
+
 <?php
-// Use environment variables or secure configuration for credentials
-$host = getenv('DB_HOST') ?: 'a4.database.windows.net';
-$username = getenv('DB_USER') ?: 'A4';
-$password = getenv('DB_PASS') ?: 'Test1234!';
-$db_name = getenv('DB_NAME') ?: 'a4';
+try {
+    $conn = new PDO("sqlsrv:server = tcp:a4.database.windows.net; Database = a4", 
+                    "A4", 
+                    "Test1234!");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Establish the connection
-$conn = mysqli_init();
-if (!mysqli_real_connect($conn, $host, $username, $password, $db_name, 3306)) {
-    die('Failed to connect to MySQL: ' . mysqli_connect_error());
+    $stmt = $conn->prepare("SELECT * FROM Persons");
+    $stmt->execute();
+
+    // set the resulting array to associative
+    $result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
+    $data = $stmt->fetchAll();
+     
+    // Dump the data to the page
+    // print_r($data);
+    
 }
-
-// Run the SELECT query
-echo "Reading data from table:\n";
-$query = 'SELECT * FROM Patients';
-$res = mysqli_query($conn, $query);
-
-if ($res) {
-    echo "<pre>";
-    while ($row = mysqli_fetch_assoc($res)) {
-        print_r($row);
-    }
-    echo "</pre>";
-} else {
-    die('Query failed: ' . mysqli_error($conn));
+catch (PDOException $e) {
+    print("Error connecting to SQL Server.");
+    die(print_r($e));
 }
-
-// Close the connection
-mysqli_close($conn);
 ?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Database Demonstration</title>
+    <style>
+      table, td, th {
+        border: 1px solid black;
+      }
+      td, th {
+        padding: 5px;
+      }
+      table {
+        border-collapse: collapse;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>Database Example</h1>
+
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+      </tr>
+      <?php 
+
+        foreach ($data as $record)
+        {
+          ?>
+          <tr>
+            <td><?php echo $record["id"]?></td>
+            <td><?php echo $record["firstname"]?></td>
+            <td><?php echo $record["lastname"]?></td>
+          </tr>
+          <?
+        }
+
+      ?>
+    </table>
+
+  </body>
+</html>
