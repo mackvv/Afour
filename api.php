@@ -1,50 +1,37 @@
-<?php
-// Fetch environment variables
-$serverName = getenv('a4.database.windows.net'); // e.g., 'a4.database.windows.net'
-$database = getenv('a4');     // Your database name
-$username = getenv('A4');     // SQL admin username
-$password = getenv('Test1234!'); // SQL admin password
+const mysql = require('mysql');
 
-// Establish database connection
-try {
-    $conn = new PDO("sqlsrv:server=$serverName;Database=$database", $username, $password, [
-        PDO::SQLSRV_ATTR_ENCRYPT => 1, // Enforce SSL connection
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-} catch (PDOException $e) {
-    echo json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]);
-    exit;
-}
+module.exports = async function (context, req) {
+    const connection = mysql.createConnection({
+        host: process.env.a4.database.windows.net,
+        user: process.env.A4,
+        password: process.env.Test1234!,
+        database: process.env.A4
+    });
 
-// Handle HTTP GET requests
-$action = $_GET['action'] ?? null;
+    connection.connect();
 
-if ($action === 'read') {
-    // Fetch all records from the Patients table
-    try {
-        $stmt = $conn->query("SELECT * FROM Patients");
-        $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        header('Content-Type: application/json');
-        echo json_encode($patients);
-    } catch (PDOException $e) {
-        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-    }
-} elseif ($action === 'delete') {
-    $id = $_GET['id'] ?? null;
-    if ($id) {
-        // Delete a record with the given ID
-        try {
-            $stmt = $conn->prepare("DELETE FROM Patients WHERE id = :id");
-            $stmt->execute(['id' => $id]);
-            echo json_encode(["status" => "success", "message" => "Record with ID $id deleted."]);
-        } catch (PDOException $e) {
-            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-        }
-    } else {
-        echo json_encode(["status" => "error", "message" => "Missing 'id' parameter."]);
-    }
-} else {
-    // Invalid action
-    echo json_encode(["status" => "error", "message" => "Invalid action. Use 'read' or 'delete'."]);
-}
-?>
+    if (req.method === 'POST') {
+        const allergenName = req.query.allergen_name;
+        const allergyRecord = req.body;
+
+
+        connection.query('DELETE FROM PatientAllergies WHERE allergen_name = ?', [allergenName], (error) => {
+            if (error) {
+                context.res = { status: 500, body: "Error deleting records: " + error };
+                connection.end();
+                return;
+            }
+
+            const query = 'INSERT INTO PatientAllergies (patient_name, allergen_name, reaction_description, severity_level) VALUES (?, ?, ?, ?)';
+            const { patient_name, allergen_name, reaction_description, severity_level } = allergyRecord;
+            connection.query(query, [patient_name, allergen_name, reaction_description, severity_level], (error) => {
+                if (error) {
+                    context.res = { status: 500, body: "Error inserting record: " + error };
+                } else {
+                    context.res = { status: 200, body: "Success." };
+                }
+                connection.end();
+            });
+        });
+    } 
+};
