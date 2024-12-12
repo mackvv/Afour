@@ -3,7 +3,7 @@
 $serverName = getenv('a4.database.windows.net'); // Example: 'a4.database.windows.net'
 $username = getenv('A4');  // Example: 'A4'
 $password = getenv('Test1234!'); // Example: 'Test1234!'
-$database = getenv('A4');  // Example: 'A4'
+$database = getenv('a4');  // Example: 'A4'
 
 try {
     // Establish database connection
