@@ -1,8 +1,4 @@
 <?php
-// Load environment variables
-require_once 'vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
 
 // Retrieve environment variables
 $dbHost = getenv('DB_HOST');       // Example: yourserver.database.windows.net
