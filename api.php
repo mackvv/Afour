@@ -1,30 +1,52 @@
 <?php
-header('Content-Type: application/json');
+// Load environment variables
+require_once 'vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Retrieve environment variables
+$dbHost = getenv('DB_HOST');       // Example: yourserver.database.windows.net
+$dbName = getenv('DB_NAME');       // Your database name
+$dbUser = getenv('DB_USER');       // Your database user
+$dbPass = getenv('DB_PASS');       // Your database password
 
 try {
-    $conn = new PDO("sqlsrv:server = tcp:a4.database.windows.net; Database = a4", 
-                    "A4", 
-                    "Test1234!");
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Establish database connection
+    $dsn = "sqlsrv:server=$dbHost;database=$dbName";
+    $pdo = new PDO($dsn, $dbUser, $dbPass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $action = isset($_GET['action']) ? $_GET['action'] : null;
-    $id = isset($_GET['id']) ? intval($_GET['id']) : null;
+    // Handle the action parameter
+    $action = $_GET['action'] ?? null;
 
     if ($action === 'read') {
-        $stmt = $conn->prepare("SELECT * FROM Patients");
-        $stmt->execute();
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $data = $stmt->fetchAll();
-        echo json_encode($data);
-    } elseif ($action === 'delete' && $id) {
-        $stmt = $conn->prepare("DELETE FROM Patients WHERE id = :id");
+        // Fetch all patient records
+        $stmt = $pdo->query("SELECT * FROM Patients");
+        $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Output records as JSON
+        header('Content-Type: application/json');
+        echo json_encode($patients);
+
+    } elseif ($action === 'delete' && isset($_GET['id'])) {
+        // Delete a patient record
+        $id = (int) $_GET['id'];
+        $stmt = $pdo->prepare("DELETE FROM Patients WHERE id = :id");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        echo json_encode(["message" => "Record with ID $id has been deleted successfully."]);
+
+        // Output success message
+        header('Content-Type: application/json');
+        echo json_encode(['message' => "Record with id $id deleted successfully"]);
+
     } else {
-        echo json_encode(["error" => "Invalid action. Use 'read' or 'delete'."]);
+        // Invalid action
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid action']);
     }
 } catch (PDOException $e) {
-    echo json_encode(["error" => "Database connection failed.", "details" => $e->getMessage()]);
+    // Handle database errors
+    http_response_code(500);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }
 ?>
