@@ -2,8 +2,8 @@
 <?php
 try {
    $serverName = getenv('a4.database.windows.net');
-$database = getenv('patients');
-$username = getenv('A4');
+$database = getenv('Patients');
+$username = getenv('a4');
 $password = getenv('Test1234!');
 
  // Attempt to connect
