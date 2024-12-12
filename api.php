@@ -2,7 +2,7 @@
 <?php
 try {
    $serverName = getenv('a4.database.windows.net');
-$database = getenv('Patients');
+$database = getenv('patients');
 $username = getenv('A4');
 $password = getenv('Test1234!');
 
