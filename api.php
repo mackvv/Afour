@@ -6,7 +6,7 @@ try {
                     "Test1234!");
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $stmt = $conn->prepare("SELECT * FROM Persons");
+    $stmt = $conn->prepare("SELECT * FROM Patients");
     $stmt->execute();
 
     // set the resulting array to associative
